@@ -1,0 +1,6 @@
+# Folders to ignore
+compost/*
+config/*
+dist/*
+examples/*
+test/*

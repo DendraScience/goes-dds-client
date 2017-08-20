@@ -1,0 +1,46 @@
+{
+  "name": "@dendra-science/goes-dds-client",
+  "version": "0.0.1",
+  "description": "DDS (DCP Data Service) client for accessing the GOES DCS.",
+  "license": "BSD-2-Clause-FreeBSD",
+  "author": "J. Scott Smith <scott@newleafsolutionsinc.com>",
+  "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DendraScience/goes-dds-client.git"
+  },
+  "scripts": {
+    "babel": "babel src -d dist",
+    "build": "npm run lint && npm run clean && npm run babel",
+    "clean": "rm -rf dist/*",
+    "lint": "eslint src",
+    "lint-test": "eslint test",
+    "test": "npm run lint-test && NODE_ENV=test mocha test --recursive --use_strict --bail",
+    "test:build": "npm run build && npm run test",
+    "test:watch": "chokidar --initial 'src/**/*.js' 'test/**/*.js' -c 'npm run test:build'"
+  },
+  "engines": {
+    "node": ">=6.11.0"
+  },
+  "dependencies": {
+    "@dendra-science/task-queue": "0.0.1",
+    "moment": "^2.18.1",
+    "sax-stream": "^1.2.3"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-preset-es2015-node6": "^0.4.0",
+    "chai": "^4.1.1",
+    "eslint": "^4.4.1",
+    "eslint-config-standard": "^10.2.1",
+    "eslint-plugin-import": "^2.7.0",
+    "eslint-plugin-node": "^5.1.1",
+    "eslint-plugin-promise": "^3.5.0",
+    "eslint-plugin-standard": "^3.0.1",
+    "mocha": "^3.5.0"
+  },
+  "optionalDependencies": {
+    "fsevents": "^1.0.0"
+  }
+}
