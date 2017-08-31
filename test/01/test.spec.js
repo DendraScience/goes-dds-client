@@ -4,15 +4,16 @@
 
 const moment = require('moment')
 const now = moment().utc()
-const since = now.clone().subtract(5, 'd').startOf('d') // Get data from 5 days ago
+const since = now.clone().subtract(15, 'd').startOf('d')
 const until = since.clone().add(1, 'd')
 
 const DATE_FORMAT = 'YYYY/DDD HH:mm:ss'
+const DCP_ADDRESS = 'BEC0035C'
 
 describe('Module', function () {
   this.timeout(60000)
 
-  let authOpts = {
+  const authOpts = {
     algorithm: 'sha256',
     username: process.env.DDS_USER,
     password: process.env.DDS_PASS
@@ -64,7 +65,7 @@ describe('Module', function () {
 
   it('should request IdCriteria #1', function () {
     return client.request(dds.types.IdCriteria, {
-      DCP_ADDRESS: 'BEC0035C',
+      DCP_ADDRESS: DCP_ADDRESS,
       DRS_SINCE: since.format(DATE_FORMAT),
       DRS_UNTIL: until.format(DATE_FORMAT)
     }).then(res => {
@@ -96,7 +97,7 @@ describe('Module', function () {
 
   it('should request IdCriteria #2', function () {
     return client.request(dds.types.IdCriteria, {
-      DCP_ADDRESS: 'BEC0035C',
+      DCP_ADDRESS: DCP_ADDRESS,
       DRS_SINCE: since.format(DATE_FORMAT),
       DRS_UNTIL: until.format(DATE_FORMAT)
     }).then(res => {
@@ -128,7 +129,7 @@ describe('Module', function () {
 
   it('should request IdCriteria #3', function () {
     return client.request(dds.types.IdCriteria, {
-      DCP_ADDRESS: 'BEC0035C',
+      DCP_ADDRESS: DCP_ADDRESS,
       DRS_SINCE: since.format(DATE_FORMAT),
       DRS_UNTIL: until.format(DATE_FORMAT)
     }).then(res => {

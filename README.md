@@ -1,6 +1,6 @@
 # GOES DDS Client
 
-Provides a simple client class that communicates to the GOES Data Collection System using the DDS (DCP Data Service) protocol. Allows a basic set of request/response messages to be sent/received over TCP sockets to authenticate and retrieve data.
+Provides a simple client class that communicates with the GOES Data Collection System using the DDS (DCP Data Service) protocol. Allows a basic set of request/response messages to be sent/received over TCP sockets to authenticate and retrieve data.
 
 
 ## Instructions
