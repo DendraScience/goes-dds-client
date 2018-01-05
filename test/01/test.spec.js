@@ -7,8 +7,8 @@ const now = moment().utc()
 const since = now.clone().subtract(15, 'd').startOf('d')
 const until = since.clone().add(1, 'd')
 
-const DATE_FORMAT = 'YYYY/DDD HH:mm:ss'
-const DCP_ADDRESS = 'BEC0035C'
+const DATE_FORMAT = 'YYYY/DDDD HH:mm:ss'
+const DCP_ADDRESS = 'BEC025B0'
 
 describe('Module', function () {
   this.timeout(60000)

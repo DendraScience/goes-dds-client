@@ -43,7 +43,7 @@ export class AuthHelloBodyFormatter extends BodyFormatter {
 
     const authHashStr = crypto.createHash(options.algorithm || 'sha1').update(authBuf).digest('hex').toUpperCase()
 
-    return Buffer.from(`${un} ${m.format('YYDDDHHmmss')} ${authHashStr}`)
+    return Buffer.from(`${un} ${m.format('YYDDDDHHmmss')} ${authHashStr}`)
   }
 }
 
