@@ -3,6 +3,7 @@
  */
 import {Transform} from 'stream'
 import {
+  ENCODING,
   FILE_NAME_LENGTH
 } from './consts'
 import parseDOMSATHeader from './parseDOMSATHeader'
@@ -36,7 +37,7 @@ export class DebugBodyParser extends BodyParser {
 
 export class ErrorBodyParser extends BodyParser {
   _flush (callback) {
-    const str = this._buf.toString(null, 1, this._buf.length)
+    const str = this._buf.toString(ENCODING, 1, this._buf.length)
     const parts = str.split(',')
 
     this.push({
@@ -57,7 +58,7 @@ export class ErrorBodyParser extends BodyParser {
 
 export class HelloResponseParser extends BodyParser {
   _flush (callback) {
-    const str = this._buf.toString(null, 0, this._buf.length)
+    const str = this._buf.toString(ENCODING, 0, this._buf.length)
     const parts = str.split(' ')
 
     this.push({
@@ -77,7 +78,7 @@ export class HelloResponseParser extends BodyParser {
 
 export class AuthHelloRespParser extends BodyParser {
   _flush (callback) {
-    const str = this._buf.toString(null, 0, this._buf.length)
+    const str = this._buf.toString(ENCODING, 0, this._buf.length)
     const parts = str.split(' ')
 
     this.push({
@@ -127,7 +128,7 @@ export class DcpReqBodyParser extends BodyParser {
 
         const zeroIndex = this._buf.indexOf(0)
         this._obj = {
-          fileName: this._buf.toString(null, 0, zeroIndex > -1 ? zeroIndex : FILE_NAME_LENGTH)
+          fileName: this._buf.toString(ENCODING, 0, zeroIndex > -1 ? zeroIndex : FILE_NAME_LENGTH)
         }
         this._buf = this._buf.slice(FILE_NAME_LENGTH)
         this._dataState++

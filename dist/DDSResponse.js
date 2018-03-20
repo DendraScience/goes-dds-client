@@ -15,7 +15,7 @@ class DDSResponse {
     if (this.body) this.body.removeAllListeners();
 
     this.body = null;
-    this.data = null;
+    this._data = null;
   }
 
   _onDataHandler(data) {
@@ -28,14 +28,22 @@ class DDSResponse {
     resolve(this._data);
   }
 
+  _onErrorHandler(reject, err) {
+    this.error = err;
+    this.body.removeAllListeners();
+    reject(err);
+  }
+
   data() {
+    if (this.error) return Promise.reject(this.error);
     if (this._data) return Promise.resolve(this._data);
 
     this._data = [];
 
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       this.body.on('data', this._onDataHandler.bind(this));
       this.body.once('end', this._onEndHandler.bind(this, resolve));
+      this.body.once('error', this._onErrorHandler.bind(this, reject));
     });
   }
 }

@@ -25,13 +25,13 @@ function parseDOMSATHeader(buf) {
   /*
     DCP address
    */
-  header.address = body.toString(null, 0, 8);
+  header.address = body.toString(_consts.ENCODING, 0, 8);
   body = body.slice(8);
 
   /*
     Time formatted as YYDDDHHMMSS
    */
-  const timeStr = header.timeString = body.toString(null, 0, 11);
+  const timeStr = header.timeString = body.toString(_consts.ENCODING, 0, 11);
   const timeM = (0, _moment2.default)(`${timeStr}+0000`, 'YYDDDHHmmssZ', true).utc();
   if (!timeM) throw new Error('Invalid time format');
   header.timeDate = timeM.toDate();
@@ -40,7 +40,7 @@ function parseDOMSATHeader(buf) {
   /*
     Message type code
    */
-  header.typeCode = body.toString(null, 0, 1);
+  header.typeCode = body.toString(_consts.ENCODING, 0, 1);
   body = body.slice(1);
 
   /*
@@ -51,25 +51,25 @@ function parseDOMSATHeader(buf) {
     throw new Error('Invalid signal strength value');
   }
 
-  header.signalStrength = body.toString(null, 0, _consts.SIGNAL_STRENGTH_MIN.length) | 0;
+  header.signalStrength = body.toString(_consts.ENCODING, 0, _consts.SIGNAL_STRENGTH_MIN.length) | 0;
   body = body.slice(_consts.SIGNAL_STRENGTH_MIN.length);
 
   /*
     Frequency offset
    */
-  header.frequencyOffset = body.toString(null, 0, 2);
+  header.frequencyOffset = body.toString(_consts.ENCODING, 0, 2);
   body = body.slice(2);
 
   /*
     Modulation index
    */
-  header.modulationIndex = body.toString(null, 0, 1);
+  header.modulationIndex = body.toString(_consts.ENCODING, 0, 1);
   body = body.slice(1);
 
   /*
     Data quality indicator
    */
-  header.dataQualityIndicator = body.toString(null, 0, 1);
+  header.dataQualityIndicator = body.toString(_consts.ENCODING, 0, 1);
   body = body.slice(1);
 
   /*
@@ -80,19 +80,19 @@ function parseDOMSATHeader(buf) {
     throw new Error('Invalid channel number value');
   }
 
-  header.channelNumber = body.toString(null, 0, _consts.CHANNEL_NUMBER_MIN.length) | 0;
+  header.channelNumber = body.toString(_consts.ENCODING, 0, _consts.CHANNEL_NUMBER_MIN.length) | 0;
   body = body.slice(_consts.CHANNEL_NUMBER_MIN.length);
 
   /*
     Spacecraft indicator
    */
-  header.spacecraftIndicator = body.toString(null, 0, 1);
+  header.spacecraftIndicator = body.toString(_consts.ENCODING, 0, 1);
   body = body.slice(1);
 
   /*
     Uplink carrier status
    */
-  header.uplinkCarrierStatus = body.toString(null, 0, 2);
+  header.uplinkCarrierStatus = body.toString(_consts.ENCODING, 0, 2);
   body = body.slice(2);
 
   /*
@@ -102,7 +102,7 @@ function parseDOMSATHeader(buf) {
     throw new Error('Invalid body length value');
   }
 
-  header.length = body.toString(null, 0, _consts.LENGTH_MIN.length) | 0;
+  header.length = body.toString(_consts.ENCODING, 0, _consts.LENGTH_MIN.length) | 0;
   body = body.slice(_consts.LENGTH_MIN.length);
 
   return {
