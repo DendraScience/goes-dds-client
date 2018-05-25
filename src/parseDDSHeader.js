@@ -1,4 +1,5 @@
 import {
+  ENCODING,
   LENGTH_MAX,
   LENGTH_MIN,
   SYNC
@@ -31,7 +32,7 @@ export default function parseDDSHeader (buf) {
   /*
     Message type code
    */
-  header.typeCode = body.toString(null, 0, 1)
+  header.typeCode = body.toString(ENCODING, 0, 1)
   header.type = typeCodes[header.typeCode]
   if (!header.type) throw new Error('Unknown message type code')
 
@@ -45,7 +46,7 @@ export default function parseDDSHeader (buf) {
     throw new Error('Invalid body length value')
   }
 
-  header.length = body.toString(null, 0, LENGTH_MIN.length) | 0
+  header.length = body.toString(ENCODING, 0, LENGTH_MIN.length) | 0
   body = body.slice(LENGTH_MIN.length)
 
   return {

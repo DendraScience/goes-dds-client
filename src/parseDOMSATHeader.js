@@ -3,6 +3,7 @@ import {
   CHANNEL_NUMBER_MAX,
   CHANNEL_NUMBER_MIN,
   DOMSAT_HEADER_LENGTH,
+  ENCODING,
   LENGTH_MAX,
   LENGTH_MIN,
   SIGNAL_STRENGTH_MAX,
@@ -21,13 +22,13 @@ export default function parseDOMSATHeader (buf) {
   /*
     DCP address
    */
-  header.address = body.toString(null, 0, 8)
+  header.address = body.toString(ENCODING, 0, 8)
   body = body.slice(8)
 
   /*
     Time formatted as YYDDDHHMMSS
    */
-  const timeStr = header.timeString = body.toString(null, 0, 11)
+  const timeStr = header.timeString = body.toString(ENCODING, 0, 11)
   const timeM = moment(`${timeStr}+0000`, 'YYDDDHHmmssZ', true).utc()
   if (!timeM) throw new Error('Invalid time format')
   header.timeDate = timeM.toDate()
@@ -36,7 +37,7 @@ export default function parseDOMSATHeader (buf) {
   /*
     Message type code
    */
-  header.typeCode = body.toString(null, 0, 1)
+  header.typeCode = body.toString(ENCODING, 0, 1)
   body = body.slice(1)
 
   /*
@@ -48,25 +49,25 @@ export default function parseDOMSATHeader (buf) {
     throw new Error('Invalid signal strength value')
   }
 
-  header.signalStrength = body.toString(null, 0, SIGNAL_STRENGTH_MIN.length) | 0
+  header.signalStrength = body.toString(ENCODING, 0, SIGNAL_STRENGTH_MIN.length) | 0
   body = body.slice(SIGNAL_STRENGTH_MIN.length)
 
   /*
     Frequency offset
    */
-  header.frequencyOffset = body.toString(null, 0, 2)
+  header.frequencyOffset = body.toString(ENCODING, 0, 2)
   body = body.slice(2)
 
   /*
     Modulation index
    */
-  header.modulationIndex = body.toString(null, 0, 1)
+  header.modulationIndex = body.toString(ENCODING, 0, 1)
   body = body.slice(1)
 
   /*
     Data quality indicator
    */
-  header.dataQualityIndicator = body.toString(null, 0, 1)
+  header.dataQualityIndicator = body.toString(ENCODING, 0, 1)
   body = body.slice(1)
 
   /*
@@ -78,19 +79,19 @@ export default function parseDOMSATHeader (buf) {
     throw new Error('Invalid channel number value')
   }
 
-  header.channelNumber = body.toString(null, 0, CHANNEL_NUMBER_MIN.length) | 0
+  header.channelNumber = body.toString(ENCODING, 0, CHANNEL_NUMBER_MIN.length) | 0
   body = body.slice(CHANNEL_NUMBER_MIN.length)
 
   /*
     Spacecraft indicator
    */
-  header.spacecraftIndicator = body.toString(null, 0, 1)
+  header.spacecraftIndicator = body.toString(ENCODING, 0, 1)
   body = body.slice(1)
 
   /*
     Uplink carrier status
    */
-  header.uplinkCarrierStatus = body.toString(null, 0, 2)
+  header.uplinkCarrierStatus = body.toString(ENCODING, 0, 2)
   body = body.slice(2)
 
   /*
@@ -101,7 +102,7 @@ export default function parseDOMSATHeader (buf) {
     throw new Error('Invalid body length value')
   }
 
-  header.length = body.toString(null, 0, LENGTH_MIN.length) | 0
+  header.length = body.toString(ENCODING, 0, LENGTH_MIN.length) | 0
   body = body.slice(LENGTH_MIN.length)
 
   return {

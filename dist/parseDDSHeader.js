@@ -39,7 +39,7 @@ function parseDDSHeader(buf) {
   /*
     Message type code
    */
-  header.typeCode = body.toString(null, 0, 1);
+  header.typeCode = body.toString(_consts.ENCODING, 0, 1);
   header.type = typeCodes[header.typeCode];
   if (!header.type) throw new Error('Unknown message type code');
 
@@ -52,7 +52,7 @@ function parseDDSHeader(buf) {
     throw new Error('Invalid body length value');
   }
 
-  header.length = body.toString(null, 0, _consts.LENGTH_MIN.length) | 0;
+  header.length = body.toString(_consts.ENCODING, 0, _consts.LENGTH_MIN.length) | 0;
   body = body.slice(_consts.LENGTH_MIN.length);
 
   return {

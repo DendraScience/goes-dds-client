@@ -46,7 +46,7 @@ class DebugBodyParser extends BodyParser {
 exports.DebugBodyParser = DebugBodyParser;
 class ErrorBodyParser extends BodyParser {
   _flush(callback) {
-    const str = this._buf.toString(null, 1, this._buf.length);
+    const str = this._buf.toString(_consts.ENCODING, 1, this._buf.length);
     const parts = str.split(',');
 
     this.push({
@@ -68,7 +68,7 @@ class ErrorBodyParser extends BodyParser {
 exports.ErrorBodyParser = ErrorBodyParser;
 class HelloResponseParser extends BodyParser {
   _flush(callback) {
-    const str = this._buf.toString(null, 0, this._buf.length);
+    const str = this._buf.toString(_consts.ENCODING, 0, this._buf.length);
     const parts = str.split(' ');
 
     this.push({
@@ -89,7 +89,7 @@ class HelloResponseParser extends BodyParser {
 exports.HelloResponseParser = HelloResponseParser;
 class AuthHelloRespParser extends BodyParser {
   _flush(callback) {
-    const str = this._buf.toString(null, 0, this._buf.length);
+    const str = this._buf.toString(_consts.ENCODING, 0, this._buf.length);
     const parts = str.split(' ');
 
     this.push({
@@ -141,7 +141,7 @@ class DcpReqBodyParser extends BodyParser {
 
         const zeroIndex = this._buf.indexOf(0);
         this._obj = {
-          fileName: this._buf.toString(null, 0, zeroIndex > -1 ? zeroIndex : _consts.FILE_NAME_LENGTH)
+          fileName: this._buf.toString(_consts.ENCODING, 0, zeroIndex > -1 ? zeroIndex : _consts.FILE_NAME_LENGTH)
         };
         this._buf = this._buf.slice(_consts.FILE_NAME_LENGTH);
         this._dataState++;
