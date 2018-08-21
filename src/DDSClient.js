@@ -1,6 +1,7 @@
 import net from 'net'
 import {EventEmitter} from 'events'
-import * as tq from '@dendra-science/task-queue'
+// OLD
+// import * as tq from '@dendra-science/task-queue'
 import {
   EMPTY_BUF,
   ERROR_CHAR,
@@ -15,24 +16,41 @@ function errorBodyParser (reader) {
   return reader.pipe(new ErrorBodyParser())
 }
 
+// NEW
+const DEFAULT_HOST = 'cdadata.wcda.noaa.gov'
+const DEFAULT_PORT = 16003
 const DEFAULT_TIMEOUT = 90000
-const DEFAULT_OPTIONS = {
-  host: 'cdadata.wcda.noaa.gov',
-  port: 16003,
-  connectTimeout: DEFAULT_TIMEOUT,
-  disconnectTimeout: DEFAULT_TIMEOUT,
-  requestTimeout: DEFAULT_TIMEOUT
-}
+
+// OLD
+// const DEFAULT_TIMEOUT = 90000
+// const DEFAULT_OPTIONS = {
+//   host: 'cdadata.wcda.noaa.gov',
+//   port: 16003,
+//   connectTimeout: DEFAULT_TIMEOUT,
+//   disconnectTimeout: DEFAULT_TIMEOUT,
+//   requestTimeout: DEFAULT_TIMEOUT
+// }
 
 /**
  * A client class for communicating with a DDS server over TCP.
  */
 export default class DDSClient extends EventEmitter {
+  // OLD
+  // constructor (options) {
+  //   super()
+
+  //   this.options = Object.assign({}, DEFAULT_OPTIONS, options)
+  //   this.queue = new tq.TaskQueue()
+  // }
+
+  // NEW
   constructor (options) {
     super()
 
-    this.options = Object.assign({}, DEFAULT_OPTIONS, options)
-    this.queue = new tq.TaskQueue()
+    this.options = Object.assign({
+      host: DEFAULT_HOST,
+      port: DEFAULT_PORT
+    }, options)
   }
 
   _clearTimeout () {
@@ -51,6 +69,7 @@ export default class DDSClient extends EventEmitter {
     if (!this.socket) return
 
     this.isConnected = false
+
     this.socket.removeAllListeners()
     this.socket.destroy()
     this.socket.unref()
@@ -58,24 +77,31 @@ export default class DDSClient extends EventEmitter {
     this.socket = null
   }
 
+  // OLD
+  // destroy () {
+  //   this.cancel()
+
+  //   this.queue.destroy()
+
+  //   this.queue = null
+  // }
+
+  // NEW
   destroy () {
     this.cancel()
-
-    this.queue.destroy()
-
-    this.queue = null
   }
 
-  _cancelError (err, task) {
-    this.cancel()
+  // OLD
+  // _cancelError (err, task) {
+  //   this.cancel()
 
-    this.emit('error', err)
+  //   this.emit('error', err)
 
-    const item = this.queue.head
-    if (item && (item.task === task)) {
-      return item.isCompleted ? this.queue.next() : item.error(err)
-    }
-  }
+  //   const item = this.queue.head
+  //   if (item && (item.task === task)) {
+  //     return item.isCompleted ? this.queue.next() : item.error(err)
+  //   }
+  // }
 
   _response (res) {
     this._clearTimeout()
@@ -124,18 +150,35 @@ export default class DDSClient extends EventEmitter {
     }, this.options.requestTimeout)
   }
 
+  // OLD
+  // _onCloseHandler () {
+  //   this._buf = null
+  //   this._dataState = 0
+  //   this._clearTimeout()
+
+  //   this.isConnected = false
+  //   this.socket.removeAllListeners()
+  //   this.socket.unref()
+
+  //   const item = this.queue.head
+  //   if (item && (item.task === this._disconnectTask)) {
+  //     item.done()
+  //   }
+  // }
+
+  // NEW
   _onCloseHandler () {
     this._buf = null
     this._dataState = 0
     this._clearTimeout()
+
     this.isConnected = false
+
     this.socket.removeAllListeners()
+    this.socket.unpipe()
     this.socket.unref()
 
-    const item = this.queue.head
-    if (item && (item.task === this._disconnectTask)) {
-      item.done()
-    }
+    this.emit('closed')
   }
 
   _onConnectHandler () {
@@ -251,62 +294,131 @@ export default class DDSClient extends EventEmitter {
     }
   }
 
-  _connectTask ({data, done, error}) {
-    const client = data.client
+  // OLD
+  // _connectTask ({data, done, error}) {
+  //   const client = data.client
 
-    if (client.isConnected) return done()
+  //   if (client.isConnected) return done()
 
-    const sock = client.socket = new net.Socket()
-    sock.once('close', client._onCloseHandler.bind(client))
-    sock.once('connect', client._onConnectHandler.bind(client))
-    sock.once('error', client._onErrorHandler.bind(client))
-    sock.on('data', client._onDataHandler.bind(client))
+  //   const sock = client.socket = new net.Socket()
+  //   sock.once('close', client._onCloseHandler.bind(client))
+  //   sock.once('connect', client._onConnectHandler.bind(client))
+  //   sock.once('error', client._onErrorHandler.bind(client))
+  //   sock.on('data', client._onDataHandler.bind(client))
 
-    client._clearTimeout()
+  //   client._clearTimeout()
 
-    client._tid = setTimeout(() => {
-      client._tid = null
-      client._cancelError(new Error('Connect timed out'), client._connectTask)
-    }, data.timeout || client.options.connectTimeout)
+  //   client._tid = setTimeout(() => {
+  //     client._tid = null
+  //     client._cancelError(new Error('Connect timed out'), client._connectTask)
+  //   }, data.timeout || client.options.connectTimeout)
 
-    sock.connect(client.options.port, client.options.host)
+  //   sock.connect(client.options.port, client.options.host)
+  // }
+
+  // NEW
+  _connect () {
+    return new Promise((resolve, reject) => {
+      if (this.isConnected) return resolve()
+
+      const sock = this.socket = new net.Socket()
+
+      sock.once('connect', () => {
+        sock.removeAllListeners('error')
+        resolve(sock)
+      })
+      sock.once('error', reject)
+
+      sock.on('data', this._onDataHandler.bind(this))
+
+      sock.connect(this.options.port, this.options.host)
+    })
   }
 
   /**
    * Open a connection to the DDS server.
    */
+  // OLD
+  // connect (timeout = DEFAULT_TIMEOUT) {
+  //   return this.queue.push(this._connectTask, {
+  //     client: this,
+  //     timeout
+  //   })
+  // }
+
+  // NEW
   connect (timeout = DEFAULT_TIMEOUT) {
-    return this.queue.push(this._connectTask, {
-      client: this,
-      timeout
+    return Promise.race([
+      this._connect(),
+      new Promise((resolve, reject) => setTimeout(reject, timeout, new Error('Connect timeout')))
+    ]).then(sock => {
+      this.isConnected = true
+      sock.once('close', this._onCloseHandler.bind(this))
+      sock.once('error', this._onErrorHandler.bind(this))
+      this.emit('connected', sock)
+      return sock
+    }).catch(err => {
+      this.cancel()
+      throw err
     })
   }
 
-  _disconnectTask ({data, done, error}) {
-    const client = data.client
+  // OLD
+  // _disconnectTask ({data, done, error}) {
+  //   const client = data.client
 
-    if (!client.isConnected) return done()
+  //   if (!client.isConnected) return done()
 
-    client._clearTimeout()
+  //   client._clearTimeout()
 
-    client._tid = setTimeout(() => {
-      client._tid = null
-      client._cancelError(new Error('Disconnect timed out'), client._disconnectTask)
-    }, data.timeout || client.options.disconnectTimeout)
+  //   client._tid = setTimeout(() => {
+  //     client._tid = null
+  //     client._cancelError(new Error('Disconnect timed out'), client._disconnectTask)
+  //   }, data.timeout || client.options.disconnectTimeout)
 
-    client.socket.destroy()
+  //   client.socket.destroy()
+  // }
+
+  // NEW
+  _disconnect () {
+    return new Promise((resolve, reject) => {
+      if (!this.isConnected) return reject(new Error('Not connected'))
+
+      const sock = this.socket
+
+      this.once('closed', () => resolve(sock))
+      sock.once('error', reject)
+
+      sock.destroy()
+    })
   }
 
   /**
    * Close a connection to the DDS server.
    */
+  // OLD
+  // disconnect (timeout = DEFAULT_TIMEOUT) {
+  //   return this.queue.push(this._disconnectTask, {
+  //     client: this,
+  //     timeout
+  //   })
+  // }
+
+  // NEW
   disconnect (timeout = DEFAULT_TIMEOUT) {
-    return this.queue.push(this._disconnectTask, {
-      client: this,
-      timeout
+    return Promise.race([
+      this._disconnect(),
+      new Promise((resolve, reject) => setTimeout(reject, timeout, new Error('Disconnect timeout')))
+    ]).then(sock => {
+      this.emit('disconnected', sock)
+      return sock
+    }).catch(err => {
+      this.cancel()
+      throw err
     })
   }
 
+  // OLD
   _requestTask ({data, error}) {
     const client = data.client
 
@@ -326,11 +438,28 @@ export default class DDSClient extends EventEmitter {
   /**
    * Send a specific DDS request message type with options.
    */
+  // OLD
+  // request (type, options) {
+  //   return this.queue.push(this._requestTask, {
+  //     client: this,
+  //     options,
+  //     type
+  //   })
+  // }
+
+  // NEW
   request (type, options) {
-    return this.queue.push(this._requestTask, {
-      client: this,
-      options,
-      type
+    return new Promise((resolve, reject) => {
+      if (!this.isConnected) return reject(new Error('Not connected'))
+
+      // const spec = ClientSpecFormatter.format({
+      //   output_format: 'xml',
+      //   tables
+      // })
+
+      // this.socket.write(spec)
+
+      // resolve(spec.toString())
     })
   }
 }
