@@ -53,10 +53,11 @@ export default class DDSClient extends EventEmitter {
     }, options)
   }
 
-  _clearTimeout () {
-    if (this._tid) clearTimeout(this._tid)
-    this._tid = null
-  }
+  // OLD
+  // _clearTimeout () {
+  //   if (this._tid) clearTimeout(this._tid)
+  //   this._tid = null
+  // }
 
   /**
    * Cancel processing immediately and clean up.
@@ -64,7 +65,8 @@ export default class DDSClient extends EventEmitter {
   cancel () {
     this._buf = null
     this._dataState = 0
-    this._clearTimeout()
+    // TODO: Remove
+    // this._clearTimeout()
 
     if (!this.socket) return
 
@@ -103,29 +105,36 @@ export default class DDSClient extends EventEmitter {
   //   }
   // }
 
+  // OLD
+  // _response (res) {
+  //   this._clearTimeout()
+
+  //   this.emit('response', res)
+
+  //   const item = this.queue.head
+  //   const header = this._responseHeader
+  //   if (item && (item.task === this._requestTask) && header && (header.type === item.data.type)) {
+  //     item.done(res, false)
+  //   }
+  // }
+
+  // NEW
   _response (res) {
-    this._clearTimeout()
-
     this.emit('response', res)
-
-    const item = this.queue.head
-    const header = this._responseHeader
-    if (item && (item.task === this._requestTask) && header && (header.type === item.data.type)) {
-      item.done(res, false)
-    }
   }
 
   _responseBegin (header = null) {
     this._responseHeader = header
   }
 
-  _responseEnd () {
-    const item = this.queue.head
-    const header = this._responseHeader
-    if (item && (item.task === this._requestTask) && header && (header.type === item.data.type)) {
-      this.queue.next()
-    }
-  }
+  // OLD
+  // _responseEnd () {
+  //   const item = this.queue.head
+  //   const header = this._responseHeader
+  //   if (item && (item.task === this._requestTask) && header && (header.type === item.data.type)) {
+  //     this.queue.next()
+  //   }
+  // }
 
   _responseError (err) {
     this._buf = null
@@ -141,14 +150,15 @@ export default class DDSClient extends EventEmitter {
     }
   }
 
-  _startRequestTimer () {
-    this._clearTimeout()
+  // OLD
+  // _startRequestTimer () {
+  //   this._clearTimeout()
 
-    this._tid = setTimeout(() => {
-      this._tid = null
-      this._responseError(new Error('Request timed out'))
-    }, this.options.requestTimeout)
-  }
+  //   this._tid = setTimeout(() => {
+  //     this._tid = null
+  //     this._responseError(new Error('Request timed out'))
+  //   }, this.options.requestTimeout)
+  // }
 
   // OLD
   // _onCloseHandler () {
@@ -170,7 +180,6 @@ export default class DDSClient extends EventEmitter {
   _onCloseHandler () {
     this._buf = null
     this._dataState = 0
-    this._clearTimeout()
 
     this.isConnected = false
 
@@ -181,16 +190,27 @@ export default class DDSClient extends EventEmitter {
     this.emit('closed')
   }
 
+  // OLD
+  // _onConnectHandler () {
+  //   this._buf = null
+  //   this._dataState = 1
+  //   this._clearTimeout()
+  //   this.isConnected = true
+
+  //   const item = this.queue.head
+  //   if (item && (item.task === this._connectTask)) {
+  //     item.done(this.socket)
+  //   }
+  // }
+
+  // NEW
   _onConnectHandler () {
     this._buf = null
     this._dataState = 1
-    this._clearTimeout()
+
     this.isConnected = true
 
-    const item = this.queue.head
-    if (item && (item.task === this._connectTask)) {
-      item.done(this.socket)
-    }
+    this.emit('connected', sock)
   }
 
   _onDataHandler (data) {
@@ -323,11 +343,20 @@ export default class DDSClient extends EventEmitter {
 
       const sock = this.socket = new net.Socket()
 
-      sock.once('connect', () => {
-        sock.removeAllListeners('error')
+      let onError
+      let onConnect
+
+      onError = (err) => {
+        sock.removeListener('connect', onConnect)
+        reject(err)
+      }
+      onConnect = () => {
+        sock.removeListener('error', onError)
         resolve(sock)
-      })
-      sock.once('error', reject)
+      }
+
+      sock.once('connect', onConnect)
+      sock.once('error', onError)
 
       sock.on('data', this._onDataHandler.bind(this))
 
@@ -386,8 +415,20 @@ export default class DDSClient extends EventEmitter {
 
       const sock = this.socket
 
-      this.once('closed', () => resolve(sock))
-      sock.once('error', reject)
+      let onError
+      let onClosed
+
+      onError = (err) => {
+        this.removeListener('closed', onClosed)
+        reject(err)
+      }
+      onClosed = () => {
+        sock.removeListener('error', onError)
+        resolve(sock)
+      }
+
+      this.once('closed', onClosed)
+      sock.once('error', onError)
 
       sock.destroy()
     })
@@ -419,20 +460,55 @@ export default class DDSClient extends EventEmitter {
   }
 
   // OLD
-  _requestTask ({data, error}) {
-    const client = data.client
+  // _requestTask ({data, error}) {
+  //   const client = data.client
 
-    if (!client.isConnected) return error(new Error('Not connected'))
+  //   if (!client.isConnected) return error(new Error('Not connected'))
 
-    const code = Buffer.from(data.type.code)
-    const body = data.type.formatter ? data.type.formatter().format(data.options) : EMPTY_BUF
-    const len = Buffer.from(`00000${body.length}`.slice(-5))
-    const msg = Buffer.concat([SYNC, code, len, body], SYNC.length + code.length + len.length + body.length)
+  //   const code = Buffer.from(data.type.code)
+  //   const body = data.type.formatter ? data.type.formatter().format(data.options) : EMPTY_BUF
+  //   const len = Buffer.from(`00000${body.length}`.slice(-5))
+  //   const msg = Buffer.concat([SYNC, code, len, body], SYNC.length + code.length + len.length + body.length)
 
-    client._responseBegin()
-    client._startRequestTimer()
+  //   client._responseBegin()
+  //   client._startRequestTimer()
 
-    client.socket.write(msg)
+  //   client.socket.write(msg)
+  // }
+
+  // NEW
+  _request (type, options) {
+    return new Promise((resolve, reject) => {
+      if (!this.isConnected) return reject(new Error('Not connected'))
+
+      const sock = this.socket
+
+      let onError
+      let onResponse
+
+      errorCb = (err) => {
+        this.removeListener('response', onResponse)
+        reject(err)
+      }
+      onResponse = (res) => {
+        sock.removeListener('error', onError)
+        resolve(res)
+      }
+
+      this.once('response', onResponse)
+      sock.once('error', onError)
+
+      const code = Buffer.from(type.code)
+      const body = type.formatter ? type.formatter().format(options) : EMPTY_BUF
+      const len = Buffer.from(`00000${body.length}`.slice(-5))
+      const msg = Buffer.concat([SYNC, code, len, body], SYNC.length + code.length + len.length + body.length)
+
+      this._responseBegin()
+      // TODO: Remove
+      // this._startRequestTimer()
+
+      sock.write(msg)
+    })
   }
 
   /**
@@ -448,18 +524,10 @@ export default class DDSClient extends EventEmitter {
   // }
 
   // NEW
-  request (type, options) {
-    return new Promise((resolve, reject) => {
-      if (!this.isConnected) return reject(new Error('Not connected'))
-
-      // const spec = ClientSpecFormatter.format({
-      //   output_format: 'xml',
-      //   tables
-      // })
-
-      // this.socket.write(spec)
-
-      // resolve(spec.toString())
-    })
+  request (type, options, timeout = DEFAULT_TIMEOUT) {
+    return Promise.race([
+      this._request(type, options),
+      new Promise((resolve, reject) => setTimeout(reject, timeout, new Error('Request timeout')))
+    ])
   }
 }
