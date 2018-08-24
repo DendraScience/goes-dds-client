@@ -18,12 +18,12 @@ export default class BodyReader extends Readable {
     }
 
     if (this.socket && (this.numBytes > 0)) {
-      this.onDataListener = this._onDataHandler.bind(this)
+      this.onDataListener = this._onData.bind(this)
       this.socket.on('data', this.onDataListener)
     }
   }
 
-  _onDataHandler (data) {
+  _onData (data) {
     this.push(data)
     this.numBytes -= data.length
 

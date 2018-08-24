@@ -13,17 +13,17 @@ export default class DDSResponse {
     this._data = null
   }
 
-  _onDataHandler (data) {
+  _onData (data) {
     this._data.push(data)
   }
 
-  _onEndHandler (resolve) {
+  _onEnd (resolve) {
     this.bodyUsed = true
     this.body.removeAllListeners()
     resolve(this._data)
   }
 
-  _onErrorHandler (reject, err) {
+  _onError (reject, err) {
     this.error = err
     this.body.removeAllListeners()
     reject(err)
@@ -35,10 +35,15 @@ export default class DDSResponse {
 
     this._data = []
 
+    // let tid = setTimeout(() => {
+    //   tid = null
+    //   this.emit('error', new Error('Request timeout'))
+    // }, timeout)
+
     return new Promise((resolve, reject) => {
-      this.body.on('data', this._onDataHandler.bind(this))
-      this.body.once('end', this._onEndHandler.bind(this, resolve))
-      this.body.once('error', this._onErrorHandler.bind(this, reject))
+      this.body.on('data', this._onData.bind(this))
+      this.body.once('end', this._onEnd.bind(this, resolve))
+      this.body.once('error', this._onError.bind(this, reject))
     })
   }
 }
