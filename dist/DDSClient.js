@@ -10,10 +10,6 @@ var _net2 = _interopRequireDefault(_net);
 
 var _events = require('events');
 
-var _taskQueue = require('@dendra-science/task-queue');
-
-var tq = _interopRequireWildcard(_taskQueue);
-
 var _consts = require('./consts');
 
 var _BodyReader = require('./BodyReader');
@@ -30,36 +26,27 @@ var _parseDDSHeader2 = _interopRequireDefault(_parseDDSHeader);
 
 var _bodyParsers = require('./body-parsers');
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function errorBodyParser(reader) {
   return reader.pipe(new _bodyParsers.ErrorBodyParser());
 }
 
+const DEFAULT_HOST = 'cdadata.wcda.noaa.gov';
+const DEFAULT_PORT = 16003;
 const DEFAULT_TIMEOUT = 90000;
-const DEFAULT_OPTIONS = {
-  host: 'cdadata.wcda.noaa.gov',
-  port: 16003,
-  connectTimeout: DEFAULT_TIMEOUT,
-  disconnectTimeout: DEFAULT_TIMEOUT,
-  requestTimeout: DEFAULT_TIMEOUT
 
-  /**
-   * A client class for communicating with a DDS server over TCP.
-   */
-};class DDSClient extends _events.EventEmitter {
+/**
+ * A client class for communicating with a DDS server over TCP.
+ */
+class DDSClient extends _events.EventEmitter {
   constructor(options) {
     super();
 
-    this.options = Object.assign({}, DEFAULT_OPTIONS, options);
-    this.queue = new tq.TaskQueue();
-  }
-
-  _clearTimeout() {
-    if (this._tid) clearTimeout(this._tid);
-    this._tid = null;
+    this.options = Object.assign({
+      host: DEFAULT_HOST,
+      port: DEFAULT_PORT
+    }, options);
   }
 
   /**
@@ -68,111 +55,38 @@ const DEFAULT_OPTIONS = {
   cancel() {
     this._buf = null;
     this._dataState = 0;
-    this._clearTimeout();
-
-    if (!this.socket) return;
 
     this.isConnected = false;
-    this.socket.removeAllListeners();
-    this.socket.destroy();
-    this.socket.unref();
+
+    const { socket } = this;
+
+    if (!socket) return;
+
+    socket.removeAllListeners();
+    socket.destroy();
+    socket.unref();
 
     this.socket = null;
   }
 
   destroy() {
     this.cancel();
-
-    this.queue.destroy();
-
-    this.queue = null;
   }
 
-  _cancelError(err, task) {
+  _onSocketClose() {
+    const { socket } = this;
+
     this.cancel();
-
-    this.emit('error', err);
-
-    const item = this.queue.head;
-    if (item && item.task === task) {
-      return item.isCompleted ? this.queue.next() : item.error(err);
-    }
+    this.emit('closed', socket);
   }
 
-  _response(res) {
-    this._clearTimeout();
-
-    this.emit('response', res);
-
-    const item = this.queue.head;
-    const header = this._responseHeader;
-    if (item && item.task === this._requestTask && header && header.type === item.data.type) {
-      item.done(res, false);
-    }
-  }
-
-  _responseBegin(header = null) {
-    this._responseHeader = header;
-  }
-
-  _responseEnd() {
-    const item = this.queue.head;
-    const header = this._responseHeader;
-    if (item && item.task === this._requestTask && header && header.type === item.data.type) {
-      this.queue.next();
-    }
-  }
-
-  _responseError(err) {
-    this._buf = null;
-    this._dataState = 1;
-    this._clearTimeout();
-
-    this.emit('error', err);
-
-    const item = this.queue.head;
-    const header = this._responseHeader;
-    if (item && item.task === this._requestTask && (!header || header.type === item.data.type)) {
-      return item.isCompleted ? this.queue.next() : item.error(err);
-    }
-  }
-
-  _startRequestTimer() {
-    this._clearTimeout();
-
-    this._tid = setTimeout(() => {
-      this._tid = null;
-      this._responseError(new Error('Request timed out'));
-    }, this.options.requestTimeout);
-  }
-
-  _onCloseHandler() {
-    this._buf = null;
-    this._dataState = 0;
-    this._clearTimeout();
-    this.isConnected = false;
-    this.socket.removeAllListeners();
-    this.socket.unref();
-
-    const item = this.queue.head;
-    if (item && item.task === this._disconnectTask) {
-      item.done();
-    }
-  }
-
-  _onConnectHandler() {
-    this._buf = null;
-    this._dataState = 1;
-    this._clearTimeout();
+  _onSocketConnect() {
     this.isConnected = true;
 
-    const item = this.queue.head;
-    if (item && item.task === this._connectTask) {
-      item.done(this.socket);
-    }
+    this.emit('connected', this.socket);
   }
 
-  _onDataHandler(data) {
+  _onSocketData(data) {
     this._buf = this._buf ? Buffer.concat([this._buf, data], this._buf.length + data.length) : data;
 
     while (this._buf.length > 0) {
@@ -180,19 +94,20 @@ const DEFAULT_OPTIONS = {
         Loop to process (potentially) multiple messages in the buffer.
        */
 
-      this._startRequestTimer();
-
       // State 1: Parse header
       if (this._dataState === 1) {
         try {
           const ret = (0, _parseDDSHeader2.default)(this._buf);
           if (!ret) break; // Need more bytes
 
-          this._responseBegin(ret.header);
+          this._responseHeader = ret.header;
           this._buf = ret.body;
           this._dataState++;
-        } catch (e) {
-          this._responseError(e);
+        } catch (err) {
+          this._buf = null;
+          this._dataState = 1;
+
+          this.emit('error', err);
           return;
         }
       }
@@ -243,7 +158,8 @@ const DEFAULT_OPTIONS = {
           }));
         }
 
-        this._response(new _DDSResponse2.default(resOpts));
+        this.emit('response', new _DDSResponse2.default(resOpts));
+
         this._receivedBytes = minBytes;
         this._buf = this._buf.slice(minBytes);
         this._dataState++;
@@ -259,100 +175,138 @@ const DEFAULT_OPTIONS = {
           break; // Need more bytes
         }
 
-        this._responseEnd();
         this._buf = this._buf.slice(this._buf.length - (this._receivedBytes - header.length)); // Trim to next message
         this._dataState = 1;
       }
     }
   }
 
-  _onErrorHandler(err) {
-    const item = this.queue.head;
-    if (this.socket.connecting && item && item.task === this._connectTask) {
-      item.error(err);
-    }
-  }
-
-  _connectTask({ data, done, error }) {
-    const client = data.client;
-
-    if (client.isConnected) return done();
-
-    const sock = client.socket = new _net2.default.Socket();
-    sock.once('close', client._onCloseHandler.bind(client));
-    sock.once('connect', client._onConnectHandler.bind(client));
-    sock.once('error', client._onErrorHandler.bind(client));
-    sock.on('data', client._onDataHandler.bind(client));
-
-    client._clearTimeout();
-
-    client._tid = setTimeout(() => {
-      client._tid = null;
-      client._cancelError(new Error('Connect timed out'), client._connectTask);
-    }, data.timeout || client.options.connectTimeout);
-
-    sock.connect(client.options.port, client.options.host);
+  _onSocketError(err) {
+    this.emit('error', err);
   }
 
   /**
    * Open a connection to the DDS server.
    */
-  connect(timeout = DEFAULT_TIMEOUT) {
-    return this.queue.push(this._connectTask, {
-      client: this,
-      timeout
+  async connect(timeout = DEFAULT_TIMEOUT) {
+    if (this.isConnected) return this.socket;
+
+    const newSock = this.socket = new _net2.default.Socket();
+
+    newSock.on('data', this._onSocketData.bind(this));
+    newSock.once('close', this._onSocketClose.bind(this));
+    newSock.once('connect', this._onSocketConnect.bind(this));
+    newSock.once('error', this._onSocketError.bind(this));
+
+    this._buf = null;
+    this._dataState = 1;
+
+    newSock.connect(this.options.port, this.options.host);
+
+    return new Promise((resolve, reject) => {
+      let onError;
+      let onConnected;
+
+      const tid = setTimeout(() => {
+        this.removeListener('error', onError);
+        this.removeListener('connected', onConnected);
+        reject(new Error('Connect timeout'));
+      }, timeout);
+
+      onError = err => {
+        clearTimeout(tid);
+        this.removeListener('connected', onConnected);
+        reject(err);
+      };
+      onConnected = sock => {
+        clearTimeout(tid);
+        this.removeListener('error', onError);
+        resolve(sock);
+      };
+
+      this.once('error', onError);
+      this.once('connected', onConnected);
+    }).catch(err => {
+      this.cancel();
+      throw err;
     });
-  }
-
-  _disconnectTask({ data, done, error }) {
-    const client = data.client;
-
-    if (!client.isConnected) return done();
-
-    client._clearTimeout();
-
-    client._tid = setTimeout(() => {
-      client._tid = null;
-      client._cancelError(new Error('Disconnect timed out'), client._disconnectTask);
-    }, data.timeout || client.options.disconnectTimeout);
-
-    client.socket.destroy();
   }
 
   /**
    * Close a connection to the DDS server.
    */
-  disconnect(timeout = DEFAULT_TIMEOUT) {
-    return this.queue.push(this._disconnectTask, {
-      client: this,
-      timeout
+  async disconnect(timeout = DEFAULT_TIMEOUT) {
+    if (!this.isConnected) throw new Error('Not connected');
+
+    this.socket.destroy();
+
+    return new Promise((resolve, reject) => {
+      let onError;
+      let onClosed;
+
+      const tid = setTimeout(() => {
+        this.removeListener('error', onError);
+        this.removeListener('closed', onClosed);
+        reject(new Error('Disconnect timeout'));
+      }, timeout);
+
+      onError = err => {
+        clearTimeout(tid);
+        this.removeListener('closed', onClosed);
+        reject(err);
+      };
+      onClosed = sock => {
+        clearTimeout(tid);
+        this.removeListener('error', onError);
+        resolve(sock);
+      };
+
+      this.once('error', onError);
+      this.once('closed', onClosed);
+    }).catch(err => {
+      this.cancel();
+      throw err;
     });
-  }
-
-  _requestTask({ data, error }) {
-    const client = data.client;
-
-    if (!client.isConnected) return error(new Error('Not connected'));
-
-    const code = Buffer.from(data.type.code);
-    const body = data.type.formatter ? data.type.formatter().format(data.options) : _consts.EMPTY_BUF;
-    const len = Buffer.from(`00000${body.length}`.slice(-5));
-    const msg = Buffer.concat([_consts.SYNC, code, len, body], _consts.SYNC.length + code.length + len.length + body.length);
-
-    client._responseBegin();
-    client._startRequestTimer();
-
-    client.socket.write(msg);
   }
 
   /**
    * Send a specific DDS request message type with options.
    */
-  request(type, options) {
-    return this.queue.push(this._requestTask, {
-      client: this,
-      options,
-      type
+  async request(type, options, timeout = DEFAULT_TIMEOUT) {
+    if (!this.isConnected) throw new Error('Not connected');
+
+    const code = Buffer.from(type.code);
+    const body = type.formatter ? type.formatter().format(options) : _consts.EMPTY_BUF;
+    const len = Buffer.from(`00000${body.length}`.slice(-5));
+    const msg = Buffer.concat([_consts.SYNC, code, len, body], _consts.SYNC.length + code.length + len.length + body.length);
+
+    this._responseHeader = null;
+
+    this.socket.write(msg);
+
+    return new Promise((resolve, reject) => {
+      let onError;
+      let onResponse;
+
+      const tid = setTimeout(() => {
+        this.removeListener('error', onError);
+        this.removeListener('response', onResponse);
+        reject(new Error('Request timeout'));
+      }, timeout);
+
+      onError = err => {
+        clearTimeout(tid);
+        this.removeListener('response', onResponse);
+        reject(err);
+      };
+      onResponse = res => {
+        clearTimeout(tid);
+        this.removeListener('error', onError);
+        resolve(res);
+      };
+
+      this.once('error', onError);
+      this.once('response', onResponse);
     });
   }
 }

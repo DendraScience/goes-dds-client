@@ -11,7 +11,7 @@ const DATE_FORMAT = 'YYYY/DDDD HH:mm:ss'
 const DCP_ADDRESS = 'BEC025B0'
 
 describe('Module', function () {
-  this.timeout(60000)
+  this.timeout(120000)
 
   const authOpts = {
     algorithm: 'sha256',
@@ -27,7 +27,10 @@ describe('Module', function () {
 
       DDS_USER=abc DDS_PASS=def npm run test:watch
      */
+
+    /* eslint-disable no-unused-expressions */
     expect(authOpts).to.have.property('username').exist
+    /* eslint-disable no-unused-expressions */
     expect(authOpts).to.have.property('password').exist
   })
 
@@ -89,9 +92,9 @@ describe('Module', function () {
     }).then(data => {
       expect(data).to.have.nested.property('0.message.header').to.include({
         spacecraftIndicator: 'W',
-        length: 488
+        length: 1046
       })
-      expect(data).to.have.nested.property('0.message.body.length', 488)
+      expect(data).to.have.nested.property('0.message.body.length', 1046)
     })
   })
 
@@ -121,9 +124,9 @@ describe('Module', function () {
     }).then(data => {
       expect(data).to.have.nested.property('0.message.header').to.include({
         spacecraftIndicator: 'W',
-        length: 488
+        length: 1046
       })
-      expect(data).to.have.nested.property('0.message.body.length', 488)
+      expect(data).to.have.nested.property('0.message.body.length', 1046)
     })
   })
 
@@ -153,9 +156,9 @@ describe('Module', function () {
     }).then(data => {
       expect(data).to.have.nested.property('0.message.header').to.include({
         spacecraftIndicator: 'W',
-        length: 488
+        length: 1046
       })
-      expect(data).to.have.nested.property('0.message.body.length', 488)
+      expect(data).to.have.nested.property('0.message.body.length', 1046)
     })
   })
 

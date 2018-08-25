@@ -1,6 +1,6 @@
 {
   "name": "@dendra-science/goes-dds-client",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "DDS (DCP Data Service) client for accessing the GOES DCS.",
   "license": "BSD-2-Clause-FreeBSD",
   "author": "J. Scott Smith <scott@newleafsolutionsinc.com>",
@@ -24,21 +24,21 @@
   },
   "dependencies": {
     "@dendra-science/task-queue": "0.0.1",
-    "moment": "^2.20.1",
+    "moment": "^2.22.2",
     "sax-stream": "^1.2.3"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.0",
-    "babel-preset-env": "^1.6.1",
+    "babel-core": "^6.26.3",
+    "babel-preset-env": "^1.7.0",
     "chai": "^4.1.2",
-    "eslint": "^4.14.0",
+    "eslint": "^5.4.0",
     "eslint-config-standard": "^11.0.0",
-    "eslint-plugin-import": "^2.8.0",
-    "eslint-plugin-node": "^6.0.1",
-    "eslint-plugin-promise": "^3.6.0",
-    "eslint-plugin-standard": "^3.0.1",
-    "mocha": "^5.0.4"
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-node": "^7.0.1",
+    "eslint-plugin-promise": "^4.0.0",
+    "eslint-plugin-standard": "^3.1.0",
+    "mocha": "^5.2.0"
   },
   "optionalDependencies": {
     "fsevents": "^1.0.0"

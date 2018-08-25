@@ -168,7 +168,7 @@ class DcpReqBodyParser extends BodyParser {
 
       // State 3: Obtain body
       if (this._dataState === 3) {
-        const header = this._obj.message.header;
+        const { header } = this._obj.message;
 
         if (this._buf.length < header.length) break; // Need more bytes
 
@@ -219,7 +219,7 @@ class MultDcpReqBodyParser extends BodyParser {
 
       // State 2: Obtain body
       if (this._dataState === 2) {
-        const header = this._obj.message.header;
+        const { header } = this._obj.message;
 
         if (this._buf.length < header.length) break; // Need more bytes
 
@@ -245,14 +245,13 @@ class ExtMultDcpMsgParser extends BodyParser {
 
   _transform(chunk, encoding, callback) {
     const obj = {};
+    const { attribs, children } = chunk;
 
-    const attribs = chunk.attribs;
     if (attribs) {
       if (attribs.flags) obj.platformId = attribs.flags;
       if (attribs.platformId) obj.platformId = attribs.platformId;
     }
 
-    const children = chunk.children;
     if (children) {
       if (children.DomsatSeq) obj.domsatSeq = children.DomsatSeq.value | 0;
       if (children.DomsatTime) obj.domsatTimeString = children.DomsatTime.value;

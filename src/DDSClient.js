@@ -14,7 +14,6 @@ function errorBodyParser (reader) {
   return reader.pipe(new ErrorBodyParser())
 }
 
-// NEW
 const DEFAULT_HOST = 'cdadata.wcda.noaa.gov'
 const DEFAULT_PORT = 16003
 const DEFAULT_TIMEOUT = 90000
@@ -76,8 +75,6 @@ export default class DDSClient extends EventEmitter {
       /*
         Loop to process (potentially) multiple messages in the buffer.
        */
-
-      this._startRequestTimer()
 
       // State 1: Parse header
       if (this._dataState === 1) {
