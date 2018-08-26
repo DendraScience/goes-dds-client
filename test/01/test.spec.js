@@ -8,10 +8,10 @@ const since = now.clone().subtract(15, 'd').startOf('d')
 const until = since.clone().add(1, 'd')
 
 const DATE_FORMAT = 'YYYY/DDDD HH:mm:ss'
-const DCP_ADDRESS = 'BEC025B0'
+const DCP_ADDRESS = 'BEC025B0' // Burns
 
 describe('Module', function () {
-  this.timeout(120000)
+  this.timeout(180000)
 
   const authOpts = {
     algorithm: 'sha256',
@@ -20,6 +20,13 @@ describe('Module', function () {
   }
   let dds
   let client
+
+  after(async function () {
+    try {
+      if (client) await client.disconnect()
+    } catch (_) {
+    }
+  })
 
   it('verify DDS_PASS and DDS_USER', function () {
     /*
@@ -53,6 +60,10 @@ describe('Module', function () {
     })
   })
 
+  it('should wait after connect', function () {
+    return new Promise(resolve => setTimeout(resolve, 2000))
+  })
+
   it('should request IdAuthHello', function () {
     return client.request(dds.types.IdAuthHello, authOpts).then(res => {
       expect(res).to.have.property('header').to.include({
@@ -60,10 +71,16 @@ describe('Module', function () {
       })
       return res.data()
     }).then(data => {
+      console.log('IdAuthHello data', data)
+
       expect(data).to.have.property('0').to.include({
         protocolVersion: 14
       })
     })
+  })
+
+  it('should wait after IdAuthHello', function () {
+    return new Promise(resolve => setTimeout(resolve, 2000))
   })
 
   it('should request IdCriteria #1', function () {
@@ -77,10 +94,16 @@ describe('Module', function () {
       })
       return res.data()
     }).then(data => {
+      console.log('IdCriteria #1 data', data)
+
       expect(data).to.have.property('0').to.include({
         success: true
       })
     })
+  })
+
+  it('should wait after IdCriteria #1', function () {
+    return new Promise(resolve => setTimeout(resolve, 2000))
   })
 
   it('should request IdDcp', function () {
@@ -90,12 +113,18 @@ describe('Module', function () {
       })
       return res.data()
     }).then(data => {
+      console.log('IdDcp data', data)
+
       expect(data).to.have.nested.property('0.message.header').to.include({
         spacecraftIndicator: 'W',
         length: 1046
       })
       expect(data).to.have.nested.property('0.message.body.length', 1046)
     })
+  })
+
+  it('should wait after IdDcp', function () {
+    return new Promise(resolve => setTimeout(resolve, 2000))
   })
 
   it('should request IdCriteria #2', function () {
@@ -109,10 +138,16 @@ describe('Module', function () {
       })
       return res.data()
     }).then(data => {
+      console.log('IdCriteria #2 data', data)
+
       expect(data).to.have.property('0').to.include({
         success: true
       })
     })
+  })
+
+  it('should wait after IdCriteria #2', function () {
+    return new Promise(resolve => setTimeout(resolve, 2000))
   })
 
   it('should request IdDcpBlock', function () {
@@ -122,12 +157,18 @@ describe('Module', function () {
       })
       return res.data()
     }).then(data => {
+      console.log('IdDcpBlock data', data)
+
       expect(data).to.have.nested.property('0.message.header').to.include({
         spacecraftIndicator: 'W',
         length: 1046
       })
       expect(data).to.have.nested.property('0.message.body.length', 1046)
     })
+  })
+
+  it('should wait after IdDcpBlock', function () {
+    return new Promise(resolve => setTimeout(resolve, 2000))
   })
 
   it('should request IdCriteria #3', function () {
@@ -141,10 +182,16 @@ describe('Module', function () {
       })
       return res.data()
     }).then(data => {
+      console.log('IdCriteria #3 data', data)
+
       expect(data).to.have.property('0').to.include({
         success: true
       })
     })
+  })
+
+  it('should wait after IdCriteria #3', function () {
+    return new Promise(resolve => setTimeout(resolve, 2000))
   })
 
   it('should request IdDcpBlockExt', function () {
@@ -154,12 +201,18 @@ describe('Module', function () {
       })
       return res.data()
     }).then(data => {
+      console.log('IdDcpBlockExt data', data)
+
       expect(data).to.have.nested.property('0.message.header').to.include({
         spacecraftIndicator: 'W',
         length: 1046
       })
       expect(data).to.have.nested.property('0.message.body.length', 1046)
     })
+  })
+
+  it('should wait after IdDcpBlockExt', function () {
+    return new Promise(resolve => setTimeout(resolve, 2000))
   })
 
   it('should request IdGoodbye', function () {

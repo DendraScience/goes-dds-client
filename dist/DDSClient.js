@@ -34,7 +34,7 @@ function errorBodyParser(reader) {
 
 const DEFAULT_HOST = 'cdadata.wcda.noaa.gov';
 const DEFAULT_PORT = 16003;
-const DEFAULT_TIMEOUT = 90000;
+const DEFAULT_TIMEOUT = 120000;
 
 /**
  * A client class for communicating with a DDS server over TCP.
